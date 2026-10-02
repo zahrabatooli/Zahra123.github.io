@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Scholar Dental Detective</title>
+<style>
+body{font-family:Tahoma,Arial,sans-serif;background:#f4f7fb;margin:0;color:#172033}
+.container{max-width:680px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 4px 18px #0001;margin-bottom:16px}
+h1{font-size:24px;margin-top:0} h2{font-size:20px}
+.badge{display:inline-block;background:#e8f0fe;padding:6px 10px;border-radius:20px;margin:3px;font-size:13px}
+.progress{height:10px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:12px 0}
+.bar{height:100%;background:#4285f4;width:0}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,textarea,select{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd3df;border-radius:10px;font-size:16px}
+textarea{min-height:100px}
+button{border:0;border-radius:12px;padding:12px 18px;font-size:16px;cursor:pointer;background:#4285f4;color:white;margin-top:12px}
+button.secondary{background:#6b7280}
+.score{font-size:18px;font-weight:bold}
+.hidden{display:none}.hint{background:#fff8df;padding:12px;border-radius:10px;margin-top:12px}
+.code{direction:ltr;text-align:left;background:#f1f3f4;padding:10px;border-radius:8px;font-family:monospace;display:block}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card" id="setup">
+<h1>🦷 مأموریت نجات بیمار</h1>
+<p><b>Google Scholar Dental Detective</b></p>
+<p>گروه ۳ تا ۴ نفره باشید. یک گوشی برای این مأموریت و یک گوشی برای جست‌وجوی Google Scholar داشته باشید.</p>
+<label>نام گروه</label><input id="group" placeholder="مثلاً گروه ۱">
+<label>اعضای گروه</label><input id="members" placeholder="نام اعضا">
+<label>نقش‌ها</label>
+<select id="role"><option>جست‌وجوگر</option><option>کارآگاه مقاله</option><option>ثبت‌کننده</option><option>زمان‌سنج</option></select>
+<button onclick="start()">شروع مأموریت 🚀</button>
+</div>
+
+<div class="card hidden" id="mission">
+<div class="badge" id="stageLabel"></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<h2 id="title"></h2>
+<div id="task"></div>
+<div class="hint" id="hint"></div>
+<label>پاسخ گروه</label>
+<textarea id="answer" placeholder="پاسخ را وارد کنید..."></textarea>
+<button onclick="next()">ثبت پاسخ و ادامه ➜</button>
+<p class="score" id="score"></p>
+</div>
+</div>
+
+<script>
+const stages=[
+["مرحله ۱ — جست‌وجوی اولیه","مادر یک دختر ۹ ساله می‌پرسد: «درباره ترس و اضطراب دندانپزشکی در کودکان چه شواهد علمی وجود دارد؟» در Google Scholar یک جست‌وجوی ساده انجام دهید. عبارت جست‌وجو و یک نتیجه مرتبط را ثبت کنید.","از واژه‌های اصلی سؤال استفاده کنید.",5],
+["مرحله ۲ — استفاده از OR","حالا برای پیدا کردن واژه‌های جایگزین، جست‌وجو را با OR گسترده‌تر کنید.","مثلاً dental anxiety OR dental fear",10],
+["مرحله ۳ — محدود کردن به کودکان","جست‌وجو را طوری اصلاح کنید که تمرکز آن روی کودکان باشد. عبارت جست‌وجو را ثبت کنید.","از child / children / pediatric استفاده کنید.",10],
+["مرحله ۴ — حذف یک مفهوم نامرتبط","یک واژه نامرتبط را با علامت منفی از نتایج حذف کنید.","مثال: -animal",10],
+["مرحله ۵ — جست‌وجوی عبارت دقیق","عبارت dental anxiety را داخل علامت نقل‌قول قرار دهید و نتیجه را مقایسه کنید.","کد: \"dental anxiety\"",10],
+["مرحله ۶ — جست‌وجوی عنوان","یک جست‌وجو انجام دهید که عبارت dental anxiety در عنوان مقاله باشد.","از intitle: استفاده کنید.",10],
+["مرحله ۷ — جست‌وجوی نویسنده","یکی از نویسندگان مقاله‌ای که پیدا کرده‌اید را با author: جست‌وجو کنید.","مثال: author:Smith",10],
+["مرحله ۸ — کارآگاه مقاله","دو مقاله مرتبط را مقایسه کنید و برای هرکدام عنوان، نویسنده اول، مجله، سال انتشار و تعداد Cited by را ثبت کنید.","تعداد استناد بیشتر به‌تنهایی به معنی کیفیت بالاتر مقاله نیست.",15],
+["مرحله ۹ — Cited by","در یکی از مقالات، روی Cited by کلیک کنید و یک مقاله جدیدتر که به آن استناد کرده پیدا کنید.","هدف: پیدا کردن پژوهش‌های بعدی مرتبط.",10],
+["مرحله ۱۰ — Library","یکی از مقاله‌های مفید را در Google Scholar با ⭐ Save به Library ذخیره کنید.","ثبت کنید کدام مقاله را ذخیره کردید.",5],
+["مرحله ۱۱ — Alert","برای موضوع موردنظر یک Alert بسازید تا از مقالات جدید باخبر شوید.","🔔 Create alert",5],
+["مرحله ۱۲ — مأموریت نهایی","جست‌وجوی نهایی را اجرا کنید: <span class='code'>\"dental anxiety\" children -animal intitle:\"dental anxiety\"</span><br><br>یک مقاله مناسب پیدا کنید و در ۳۰ ثانیه به مادر توضیح دهید چه شواهدی درباره اضطراب دندانپزشکی کودکان پیدا کرده‌اید.","پاسخ باید بر اساس مقاله‌ای باشد که واقعاً در Google Scholar پیدا کرده‌اید.",15]
+];
+let i=0,total=0,answers=[];
+function start(){
+document.getElementById("setup").classList.add("hidden");
+document.getElementById("mission").classList.remove("hidden");
+show();
+}
+function show(){
+let s=stages[i];
+document.getElementById("stageLabel").textContent=`مرحله ${i+1} از ${stages.length}`;
+document.getElementById("title").textContent=s[0];
+document.getElementById("task").innerHTML=`<p>${s[1]}</p>`;
+document.getElementById("hint").textContent=s[2];
+document.getElementById("answer").value=answers[i]||"";
+document.getElementById("bar").style.width=((i)/stages.length*100)+"%";
+document.getElementById("score").textContent=`امتیاز فعلی: ${total}`;
+localStorage.setItem("gsDentalMission",JSON.stringify({i,total,answers}));
+}
+function next(){
+let a=document.getElementById("answer").value.trim();
+if(!a){alert("لطفاً پاسخ گروه را ثبت کنید.");return}
+answers[i]=a; total+=stages[i][3];
+if(i<stages.length-1){i++;show()}
+else{
+document.getElementById("bar").style.width="100%";
+document.getElementById("stageLabel").textContent="🎉 مأموریت کامل شد";
+document.getElementById("title").textContent="تبریک! گروه شما مأموریت را به پایان رساند.";
+document.getElementById("task").innerHTML=`<p>امتیاز نهایی گروه: <b>${total} از 130</b></p><p>پاسخ نهایی شما ثبت شد. اکنون می‌توانید درباره مقاله انتخاب‌شده و شواهد آن با کلاس صحبت کنید.</p>`;
+document.getElementById("hint").textContent="⭐ OR  |  - حذف  |  \"عبارت دقیق\"  |  intitle: عنوان  |  author: نویسنده  |  Cited by استنادهای بعدی";
+document.getElementById("answer").classList.add("hidden");
+document.querySelector("#mission button").classList.add("hidden");
+localStorage.setItem("gsDentalMission",JSON.stringify({i,total,answers,done:true}));
+}
+}
+</script>
+</body>
+</html>
